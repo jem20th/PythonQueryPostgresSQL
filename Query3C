@@ -1,0 +1,37 @@
+#Problem 3C by Harrison Ching
+#!/usr/bin/python
+
+import psycopg2
+import csv
+
+conn = psycopg2.connect(database="postgres")
+
+print "Opened database successfully"
+
+cur = conn.cursor()
+
+
+def calculation():
+		cur.execute('''	SELECT SUM(TRPMILES_D) FROM NHTSD
+			WHERE TDAYDATE_D = '%d' AND VEHID_D > 0; ''' % n)
+		miles_traveled = float((cur.fetchone())[0])
+		
+		cur.execute('''SELECT AVG(EPATMPG_V) FROM NHTSV JOIN NHTSD
+		ON NHTSD.HOUSEID_D = NHTSV.HOUSEID_V
+			WHERE TDAYDATE_V = '%d' AND VEHID_V > 0; ''' % n)
+		mileage = float((cur.fetchone())[0])
+		hh_emission = 8.887e-3 * miles_traveled / mileage
+		
+		cur.execute(''' SELECT SUM(CAST (Value_CT AS NUMERIC)) FROM EIA
+			WHERE YYYYMM_CT = '%d'; ''' % n)
+		total_emission = float((cur.fetchone())[0])
+		
+		total = hh_emission / total_emission
+		print "The percent of transportation CO2 emissions for month %d is %.2f%%" % (n, total*1000)
+
+for n in range(200803, 200813, 1):
+	calculation()
+for n in range(200901, 200905, 1):
+	calculation()
+	
+print "Done!"
