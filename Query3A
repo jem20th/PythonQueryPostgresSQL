@@ -1,0 +1,33 @@
+#Problem 3A by Harrison Ching
+#!/usr/bin/python
+
+import psycopg2
+import csv
+
+conn = psycopg2.connect(database="postgres")
+
+print "Opened database successfully"
+
+cur = conn.cursor()
+cur.execute('''SELECT * INTO Q3A FROM
+			(SELECT HOUSEID_D, PERSONID_D FROM NHTSD
+			GROUP BY HOUSEID_D, PERSONID_D) AS ID;''')
+conn.commit()
+
+cur.execute("SELECT COUNT(*) FROM Q3A")
+person_count = int((cur.fetchone())[0])
+for n in range (5, 105, 5):
+	cur.execute('''	SELECT COUNT(TRP)
+		FROM (SELECT SUM(CASE WHEN TRPMILES_D < 0
+			THEN 0
+			ELSE TRPMILES_D END) AS MILESTRAVELED FROM NHTSD
+			GROUP BY HOUSEID_D, PERSONID_D) AS TRP
+		WHERE MILESTRAVELED < %d''' % n)
+	
+	people_count = float((cur.fetchone())[0])
+	total = people_count / person_count
+	print "The percent of individuals that travel less than %d miles is %.2f%%" % (n, total*100)
+	
+cur.execute('''DROP TABLE Q3A;''')
+conn.commit()
+print "Done!"
