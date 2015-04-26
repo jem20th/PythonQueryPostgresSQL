@@ -1,0 +1,22 @@
+#Problem 3B by Harrison Ching
+#!/usr/bin/python
+
+import psycopg2
+import csv
+
+conn = psycopg2.connect(database="postgres")
+
+print "Opened database successfully"
+
+cur = conn.cursor()
+
+for n in range (5, 105, 5):
+		cur.execute('''SELECT AVG(EPATMPG_V) FROM NHTSV JOIN NHTSD
+		ON NHTSD.HOUSEID_D = NHTSV.HOUSEID_V
+		WHERE NHTSD.TRPMILES_D < %d
+		AND NHTSV.VEHID_V > 0 ; ''' % n)
+		
+		total = float((cur.fetchone())[0])
+		print "The average fuel economy of all miles traveled for trips less than %d miles (from 3a) is %.2f" % (n, total)
+		
+print "Done!"
